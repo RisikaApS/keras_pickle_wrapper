@@ -2,7 +2,7 @@
 it to be pickled.
 """
 
-import keras
+from tensorflow import keras
 import os
 import tempfile
 import threading
