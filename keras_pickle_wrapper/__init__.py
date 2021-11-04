@@ -2,14 +2,15 @@
 it to be pickled.
 """
 
-from tensorflow import keras
+import tensorflow.keras
 import os
 import tempfile
 import threading
 
+
 # Dump files to shared memory, if possible
 def _get_shm():
-    """Return memory-mapped folder path, or None to use default tempfile 
+    """Return memory-mapped folder path, or None to use default tempfile
     mechanics.
     """
     d = '/run/shm'
@@ -20,10 +21,13 @@ def _get_shm():
         d = None
     return d
 
+
 _SHM_DIR = _get_shm()
 
 # Registration mechanism for custom classes
 _custom_classes = {}
+
+
 def _register_custom_class(cls):
     """Registers a class (layer or whatever) for when keras needs it to
     deserialized.
@@ -39,6 +43,8 @@ def _register_custom_class(cls):
 # at least, this is a sufficient condition to test for bad user behavior.  This
 # approach is not strict enough for general use, though.
 _keras_pickle_pid = [None]
+
+
 def _keras_pickle_pid_check():
     my_pid = (os.getpid(), threading.current_thread().ident)
     if _keras_pickle_pid[0] is None:
@@ -47,6 +53,7 @@ def _keras_pickle_pid_check():
         raise ValueError("Must do all keras activity in a single process and "
                 "thread.  It is OK if forks happen before keras activity, "
                 "but not after.")
+
 
 def _load_model(data):
     """data - [str].  Passed as array because the member is popped to decrease
@@ -63,7 +70,7 @@ def _load_model(data):
         # decref on the data string
         data.pop()
 
-        model = keras.models.load_model(ofile.name,
+        model = tensorflow.keras.models.load_model(ofile.name,
                 custom_objects=_custom_classes)
         return model
     finally:
@@ -83,8 +90,8 @@ def _reduce_ex(self, protocol=None):
         # Before reading it out, clear the session if we're supposed to
         if _reduce_should_clear_session[0]:
             del self
-            if hasattr(keras.backend, 'clear_session'):
-                keras.backend.clear_session()
+            if hasattr(tensorflow.keras.backend, 'clear_session'):
+                tensorflow.keras.backend.clear_session()
         with open(ofile.name, 'rb') as f:
             return (_load_model, ([f.read()],))
     finally:
@@ -99,7 +106,7 @@ class KerasPickleWrapper(object):
 
     # Class attributes / methods
     NO_SHM = False
-    """NO_SHM should be set to `True` to prevent :class:`KerasPickleWrapper` 
+    """NO_SHM should be set to `True` to prevent :class:`KerasPickleWrapper`
     from using memory mapped storage when possible.
     """
 
